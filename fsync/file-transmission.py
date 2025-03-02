@@ -226,9 +226,12 @@ class FileReceiver:
         finally:
             # Update progress file with any missing packets before closing
             try:
-                with open(progress_path, "w") as progress:
-                    for pkt in sorted(missing_packets):
-                        progress.write(f"{pkt}\n")
+                if not missing_packets:
+                    os.remove(progress_path)
+                else:
+                    with open(progress_path, "w") as progress:
+                        for pkt in sorted(missing_packets):
+                            progress.write(f"{pkt}\n")
                 print(f"[DEBUG] Server: Progress file updated with missing packets: {missing_packets}")
             except Exception as e:
                 print(f"[ERROR] Server: Could not update progress file: {e}")
