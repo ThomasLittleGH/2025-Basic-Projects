@@ -218,17 +218,21 @@ class FileReceiver:
                     except Exception as e:
                         print(f"[ERROR] Server: Error processing packet: {e}")
             elapsed = time.time() - start_time
-            print(f"[DEBUG] Server: File downloaded successfully in {elapsed:.2f} seconds. ({(metadata.size/elapsed):.2f} MB/s)")
+            print(f"[DEBUG] Server: File downloaded successfully in {elapsed:.2f} seconds. ({(metadata.size/(elapsed * 1024**2)):.2f} MB/s)")
             sock.close()
         except Exception as e:
             print(f"[ERROR] Server: Exception in receive_file: {e}")
             sock.close()
-
-        if os.path.exists(progress_path):
-            if not missing_packets:
-                os.remove(progress_path)
-            with open(progress_path, "r") as progress:
-                progress.writelines(missing_packets)
+        finally:
+            # Update progress file with any missing packets before closing
+            try:
+                with open(progress_path, "w") as progress:
+                    for pkt in sorted(missing_packets):
+                        progress.write(f"{pkt}\n")
+                print(f"[DEBUG] Server: Progress file updated with missing packets: {missing_packets}")
+            except Exception as e:
+                print(f"[ERROR] Server: Could not update progress file: {e}")
+            sock.close()
 
 
 # ============================
